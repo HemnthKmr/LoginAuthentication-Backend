@@ -10,39 +10,38 @@ module.exports = (passport) => {
             {
                 usernameField: 'email',
                 passwordField: 'password'
-            },(email,password,done) => {
-            User.findOne({ 
-                where:{email: email}
-            }).then( (data) => {
-                if(data === null){
-                    return done(null,false);
-                }
-                if(data !== null)
-                {
-                    bcrypt.compare(password,data.password, (err, result)=> {
-                        if(err) return done(null, false);
-                        if(result === true){
-                            return done(null,data);
-                        }
-                        else{
-                            return done(null,false);
-                        }
-                    });
-                }
-            })
-            .catch(err => console.log(err));
-        }));
+            }, (email, password, done) => {
+                User.findOne({
+                    where: { email: email }
+                }).then((user) => {
+                    if (user == null) {
+                        return done(null, false, { message: `No user exist's` });
+                    }
+                    if (user !== null) {
+                        bcrypt.compare(password, user.password, (err, result) => {
+                            if (err) return done(null, false);
+                            if (result === true) {
+                                return done(null, user, { messsage: `Successfully authenticated` });
+                            }
+                            else {
+                                return done(null, false, { messsage: `Password not match` });
+                            }
+                        });
+                    }
+                })
+                    .catch(err => console.log(err));
+            }));
 
 
-passport.serializeUser((data,cb) => {
-    cb(null,data.id);
-});
-
-passport.deserializeUser((id,cb)=> {
-    User.findOne({ 
-        where: {id: id}
-    }).then((err,data) => {
-        cb(err,data)
+    passport.serializeUser((user, cb) => {
+        cb(null, user.id);
     });
-});
+
+    passport.deserializeUser((id, cb) => {
+        User.findOne({
+            where: { id: id }
+        }).then((err, user) => {
+            cb(err, user)
+        });
+    });
 }
